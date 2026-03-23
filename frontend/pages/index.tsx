@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import Image from "next/image";
 import hero from "@/public/images/hero_img.png";
+
 export default function Home() {
   const router = useRouter();
 
@@ -14,34 +15,43 @@ export default function Home() {
           Snap a picture of your food and let AI identify the dish and show you
           its recipe.
         </p>
-        <div className="flex gap-4 justify-center">
+        <nav className="flex gap-4 justify-center" aria-label="Main navigation">
           <button
             onClick={() => router.push("/classify")}
-            className="bg-accent text-white px-6 py-3 rounded-full font-semibold hover:bg-orange-600 transition"
+            className="bg-accent text-white px-6 py-3 rounded-full font-semibold hover:bg-orange-600 transition focus:outline-none focus:ring-4 focus:ring-orange-300 focus:ring-offset-2"
+            aria-describedby="get-started-desc"
           >
             Get Started
           </button>
+          <span id="get-started-desc" className="sr-only">
+            Start classifying Nigerian food dishes with AI
+          </span>
           <button
             onClick={() => router.push("/analytics")}
-            className="bg-gray-700 text-white px-6 py-3 rounded-full font-semibold hover:bg-gray-800 transition"
+            className="bg-gray-700 text-white px-6 py-3 rounded-full font-semibold hover:bg-gray-800 transition focus:outline-none focus:ring-4 focus:ring-gray-400 focus:ring-offset-2"
+            aria-describedby="analytics-desc"
           >
             View Analytics
           </button>
-        </div>
+          <span id="analytics-desc" className="sr-only">
+            View food classification analytics and usage statistics
+          </span>
+        </nav>
       </header>
 
-      <div className="mt-10 w-full max-w-md">
+      <main id="main-content" className="mt-10 w-full max-w-md">
         <Image
           src={hero}
-          alt="Nigerian dish"
+          alt="Nigerian dish - Jollof rice served with plantains and vegetables"
           width={500}
           height={300}
           className="rounded-xl shadow-lg"
+          priority
         />
-      </div>
+      </main>
 
       <footer className="mt-12 text-gray-500 text-sm">
-        Built with 💚 for Nigerian food lovers
+        <p>Built with 💚 for Nigerian food lovers</p>
       </footer>
     </div>
   );
