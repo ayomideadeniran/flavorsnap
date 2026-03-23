@@ -11,7 +11,12 @@
   "dependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "15.3.3"
+    "next": "15.3.3",
+    "recharts": "^2.12.7",
+    "lucide-react": "^0.447.0",
+    "date-fns": "^3.6.0",
+    "@tanstack/react-query": "^5.51.1",
+    "axios": "^1.7.2"
   },
   "devDependencies": {
     "typescript": "^5",

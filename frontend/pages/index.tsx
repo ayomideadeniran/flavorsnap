@@ -14,12 +14,20 @@ export default function Home() {
           Snap a picture of your food and let AI identify the dish and show you
           its recipe.
         </p>
-        <button
-          onClick={() => router.push("/classify")}
-          className="bg-accent text-white px-6 py-3 rounded-full font-semibold hover:bg-orange-600 transition"
-        >
-          Get Started
-        </button>
+        <div className="flex gap-4 justify-center">
+          <button
+            onClick={() => router.push("/classify")}
+            className="bg-accent text-white px-6 py-3 rounded-full font-semibold hover:bg-orange-600 transition"
+          >
+            Get Started
+          </button>
+          <button
+            onClick={() => router.push("/analytics")}
+            className="bg-gray-700 text-white px-6 py-3 rounded-full font-semibold hover:bg-gray-800 transition"
+          >
+            View Analytics
+          </button>
+        </div>
       </header>
 
       <div className="mt-10 w-full max-w-md">
