@@ -1,8 +1,7 @@
-from src.ui import theme_manager, ImageViewer
+from src.ui import theme_manager, ImageViewer, LoadingUI, SkeletonCard
+from src.core import ProgressClassifier
 import panel as pn
 import torch
-import torchvision.transforms as transforms
-from torchvision import models
 from PIL import Image
 import io
 import os
@@ -17,8 +16,11 @@ from src.ui.keyboard_manager import KeyboardManager
 # Configure Panel Extension and Theme Integration
 theme_manager.apply_to_app()
 pn.extension(
-    css_files=['static/css/image_viewer.css'],
-    js_files={'image_viewer': 'static/js/image_viewer.js'}
+    css_files=['static/css/image_viewer.css', 'static/css/loading.css'],
+    js_files={
+        'image_viewer': 'static/js/image_viewer.js',
+        'progress_tracker': 'static/js/progress_tracker.js'
+    }
 )
 
 # Inject JS for shortcuts natively
@@ -43,13 +45,7 @@ if os.path.exists(model_path):
 else:
     model = None
 
-# Transforms
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-])
-
-# Save image to correct folder
+# Save image function
 def save_image(image_obj, predicted_class, image_name="uploaded_image.jpg"):
     save_dir = f"data/train/{predicted_class}"
     os.makedirs(save_dir, exist_ok=True)
@@ -150,7 +146,7 @@ def handle_shortcut(combo):
 ui = MainInterface(classify_fn=classify, save_image_fn=manual_export)
 keyboard_manager = KeyboardManager(handle_shortcut)
 
-# Header Section
+# Header
 header = pn.Row(
     pn.pane.Markdown("# 🍽️ FlavorSnap", styles={'margin-top': '0px', 'flex': '1'}),
     theme_toggle,
@@ -164,6 +160,14 @@ app = pn.Column(
     keyboard_manager.get_widget(),
     ui.get_layout(),
     css_classes=[]
+)
+
+# App Assembly
+app = pn.Column(
+    header,
+    pn.layout.Divider(),
+    dashboard_body,
+    sizing_mode='stretch_width'
 )
 
 app.servable()
