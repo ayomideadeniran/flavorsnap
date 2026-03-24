@@ -1,4 +1,4 @@
-from src.ui import theme_manager
+from src.ui import theme_manager, ImageViewer
 import panel as pn
 import torch
 import torchvision.transforms as transforms
@@ -16,6 +16,10 @@ from src.ui.keyboard_manager import KeyboardManager
 
 # Configure Panel Extension and Theme Integration
 theme_manager.apply_to_app()
+pn.extension(
+    css_files=['static/css/image_viewer.css'],
+    js_files={'image_viewer': 'static/js/image_viewer.js'}
+)
 
 # Inject JS for shortcuts natively
 with open('static/js/keyboard_shortcuts.js', 'r') as f:
