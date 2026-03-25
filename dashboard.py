@@ -5,8 +5,16 @@ from torchvision import models
 from PIL import Image
 import io
 import os
+import sys
+from pathlib import Path
 
-pn.extension()
+# Add src to Python path for imports
+sys.path.insert(0, str(Path(__file__).parent / 'src'))
+
+from src.ui.preprocessing_controls import PreprocessingControls
+from src.core.image_enhancer import ImageEnhancer
+
+pn.extension('css')
 
 # Load model
 model_path = 'models/best_model.pth'
@@ -33,35 +41,102 @@ def save_image(image_obj, predicted_class, image_name="uploaded_image.jpg"):
 image_input = pn.widgets.FileInput(accept='image/*')
 output = pn.pane.Markdown("Upload an image of food 🍲")
 image_preview = pn.pane.Image(width=300, height=300, visible=False)
+processed_preview = pn.pane.Image(width=300, height=300, visible=False)
 spinner = pn.indicators.LoadingSpinner(value=False, width=50)
 
+# Preprocessing controls
+preprocessing_controls = PreprocessingControls()
+preprocessing_panel = preprocessing_controls.create_layout()
+
+# Global variables
+original_image = None
+processed_image = None
+
+def on_image_update(image):
+    """Handle image updates from preprocessing controls."""
+    global processed_image
+    processed_image = image
+    if image:
+        processed_preview.object = image
+        processed_preview.visible = True
+
+def handle_image_upload():
+    """Handle image upload and initialize preprocessing."""
+    global original_image, processed_image
+    
+    if image_input.value is None:
+        return
+    
+    try:
+        # Load the image
+        original_image = Image.open(io.BytesIO(image_input.value)).convert('RGB')
+        processed_image = original_image.copy()
+        
+        # Update previews
+        image_preview.object = original_image
+        image_preview.visible = True
+        processed_preview.object = processed_image
+        processed_preview.visible = True
+        
+        # Load image into preprocessing controls
+        preprocessing_controls.load_image(original_image)
+        preprocessing_controls.on_image_update = on_image_update
+        
+        output.object = "📸 Image loaded! Use preprocessing controls to enhance, then classify."
+        
+    except Exception as e:
+        output.object = f"❌ Error loading image: {str(e)}"
+
 def classify(event=None):
+    global original_image, processed_image
+    
     if image_input.value is None:
         output.object = "⚠️ Please upload an image first."
         image_preview.visible = False
+        processed_preview.visible = False
         return
+    
+    if processed_image is None:
+        output.object = "⚠️ Please wait for image to load or apply preprocessing."
+        return
+    
     try:
-        image = Image.open(io.BytesIO(image_input.value)).convert('RGB')
-
-        # Update preview
-        image_preview.object = image
-        image_preview.visible = True
-
-
         # Start spinner
         spinner.value = True
         output.object = "🔍 Classifying..."
 
+        # Use processed image for classification
+        image_to_classify = processed_image
+
         # Transform and predict
-        img_tensor = transform(image).unsqueeze(0)
+        img_tensor = transform(image_to_classify).unsqueeze(0)
         with torch.no_grad():
             outputs = model(img_tensor)
             _, pred = torch.max(outputs, 1)
             predicted_class = class_names[pred.item()]
 
-        # Save image
-        save_image(image, predicted_class)
-        output.object = f"✅ Identified as **{predicted_class}**. Image saved!"
+        # Save processed image
+        save_image(image_to_classify, predicted_class)
+        
+        # Get preprocessing parameters
+        params = preprocessing_controls.get_enhancement_params()
+        
+        # Create result message with preprocessing info
+        result_message = f"""
+✅ **Classification Result: {predicted_class}**
+
+### 📊 Preprocessing Parameters Applied:
+- **Brightness**: {params['brightness']:.1f}
+- **Contrast**: {params['contrast']:.1f}
+- **Rotation**: {params['rotation']:.0f}°
+- **Aspect Ratio**: {params.get('aspect_ratio', 'Original')}
+- **Crop**: {params.get('crop_box', 'None')}
+
+💾 Processed image saved to training data!
+        """
+        
+        output.object = result_message
+        
     except Exception as e:
         output.object = f"❌ Error: {str(e)}"
     finally:
@@ -70,14 +145,45 @@ def classify(event=None):
 run_button = pn.widgets.Button(name='Classify', button_type='primary')
 run_button.on_click(classify)
 
-app = pn.Column(
-    "# 🍽️ FlavorSnap",
-    "Upload an image and click the button to classify your food!",
+# Setup image upload handler
+image_input.param.watch(lambda event: handle_image_upload(), 'value')
+
+# Create layout with preprocessing controls
+upload_section = pn.Column(
+    "## 📤 Upload Image",
     image_input,
-    run_button,
-    spinner,
-    image_preview,
+    pn.layout.Divider(),
+)
+
+preview_section = pn.Column(
+    "## 🖼️ Image Preview",
+    pn.Row(
+        pn.Column("### Original", image_preview),
+        pn.Column("### Processed", processed_preview),
+    ),
+)
+
+controls_section = pn.Column(
+    "## 🎨 Preprocessing Controls",
+    preprocessing_panel,
+)
+
+classification_section = pn.Column(
+    "## 🍽️ Classification",
+    pn.Row(run_button, spinner),
     output,
+)
+
+app = pn.Row(
+    pn.Column(
+        upload_section,
+        preview_section,
+        classification_section,
+        sizing_mode='stretch_width',
+        max_width=600,
+    ),
+    controls_section,
+    sizing_mode='stretch_width',
 )
 
 app.servable()
