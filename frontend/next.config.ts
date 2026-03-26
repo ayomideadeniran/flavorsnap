@@ -1,12 +1,10 @@
 import type { NextConfig } from "next";
+import { i18n } from "./next-i18next.config";
 
-
-const nextConfig: NextConfig = {
-  reactStrictMode: true,
-  i18n,
-};
-
-export default withPWA({
+// Note: next-pwa is required for this feature, but currently we are focusing on fixing
+// the cache invalidation issues. Using StaleWhileRevalidate for images ensures
+// they are updated when the underlying data changes.
+const withPWA = require("next-pwa")({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
   register: true,
@@ -21,11 +19,12 @@ export default withPWA({
           maxEntries: 50,
           maxAgeSeconds: 60 * 60 * 24, // 24 hours
         },
+        networkTimeoutSeconds: 10, // Ensure we don't wait forever on flaky networks
       },
     },
     {
       urlPattern: /\.(?:jpg|jpeg|png|gif|webp|svg)$/,
-      handler: "CacheFirst",
+      handler: "StaleWhileRevalidate", // Changed from CacheFirst to fix invalidation issues
       options: {
         cacheName: "image-cache",
         expiration: {
@@ -42,4 +41,11 @@ export default withPWA({
       },
     },
   ],
-})(nextConfig);
+});
+
+const nextConfig: NextConfig = {
+  reactStrictMode: true,
+  i18n,
+};
+
+export default withPWA(nextConfig);
