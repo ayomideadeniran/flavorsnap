@@ -119,6 +119,7 @@ def classify(event=None):
         return
     
 
+
     # Get preprocessing parameters
     preprocessing_params = preprocessing_controls.get_enhancement_params()
     
